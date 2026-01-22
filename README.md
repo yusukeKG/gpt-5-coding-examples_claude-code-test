@@ -1,4 +1,7 @@
-# GPT-5* コーディング例
+# GPT-5* コーディング例（改修版）
+
+> **Note**: このリポジトリは [openai/gpt-5-coding-examples](https://github.com/openai/gpt-5-coding-examples) のフォークです。オリジナルに以下の機能を追加しています：
+> - **QuickSort Visualizer** - クイックソートアルゴリズムを視覚的に理解できるインタラクティブなアプリケーション
 
 このリポジトリは、**[GPT-5](https://platform.openai.com/docs/models/gpt-5) または [GPT-5.2](https://platform.openai.com/docs/models/gpt-5.2) の単一プロンプトで完全に生成された**デモアプリケーションのコレクションです。手作業でコードを書くことなく作成されています。
 
@@ -15,8 +18,6 @@ npm run dev
 ```
 
 アプリは `localhost:3000` で利用可能になります。
-
-[ホスト版](https://gpt5-coding-examples.vercel.app/)にアクセスすることもできます。
 
 そこから、任意のサンプルを表示し、コードを作成したゼロショットプロンプトを確認し、自分のアイデアに合わせてリミックスできます。
 
