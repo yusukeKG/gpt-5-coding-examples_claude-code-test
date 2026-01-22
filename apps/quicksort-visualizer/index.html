@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuickSort Visualizer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --bg-card: #1e293b;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --bar-default: #64748b;
+      --bar-pivot: #eab308;
+      --bar-comparing: #3b82f6;
+      --bar-swapping: #f97316;
+      --bar-sorted: #22c55e;
+      --accent: #6366f1;
+      --accent-hover: #818cf8;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1.5rem;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    h1 {
+      font-size: clamp(1.5rem, 4vw, 2rem);
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, var(--accent), var(--bar-pivot));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    /* コントロールパネル */
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    select, input[type="range"] {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      color: var(--text);
+      padding: 0.5rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    select:focus, input:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    input[type="range"] {
+      width: 100px;
+      padding: 0;
+      height: 6px;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      background: var(--accent);
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    /* 可視化エリア */
+    .visualizer {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 2px;
+      height: 300px;
+      padding: 1rem;
+      background: var(--bg);
+      border-radius: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .bar {
+      flex: 1;
+      max-width: 40px;
+      min-width: 4px;
+      background: var(--bar-default);
+      border-radius: 4px 4px 0 0;
+      transition: height 0.1s ease, background-color 0.15s ease;
+      position: relative;
+    }
+
+    .bar.pivot {
+      background: var(--bar-pivot);
+      box-shadow: 0 0 12px var(--bar-pivot);
+    }
+
+    .bar.comparing {
+      background: var(--bar-comparing);
+      box-shadow: 0 0 12px var(--bar-comparing);
+    }
+
+    .bar.swapping {
+      background: var(--bar-swapping);
+      box-shadow: 0 0 12px var(--bar-swapping);
+    }
+
+    .bar.sorted {
+      background: var(--bar-sorted);
+    }
+
+    /* ボタン */
+    .buttons {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    button {
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 500;
+      padding: 0.6rem 1.25rem;
+      border: none;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: var(--border);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* ステータス表示 */
+    .status {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .stat-item {
+      background: var(--bg);
+      padding: 1rem;
+      border-radius: 0.75rem;
+      text-align: center;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    /* ステップ説明 */
+    .step-info {
+      text-align: center;
+      padding: 1rem;
+      background: var(--bg);
+      border-radius: 0.75rem;
+      margin-bottom: 1rem;
+      min-height: 3.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .step-text {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .step-text strong {
+      color: var(--text);
+    }
+
+    /* 凡例 */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .legend-color {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+    }
+
+    .legend-color.pivot { background: var(--bar-pivot); }
+    .legend-color.comparing { background: var(--bar-comparing); }
+    .legend-color.swapping { background: var(--bar-swapping); }
+    .legend-color.sorted { background: var(--bar-sorted); }
+
+    /* レスポンシブ */
+    @media (max-width: 600px) {
+      .visualizer {
+        height: 200px;
+      }
+      .controls {
+        flex-direction: column;
+      }
+      .control-group {
+        width: 100%;
+        justify-content: space-between;
+      }
+    }
+
+    /* アニメーション無効化対応 */
+    @media (prefers-reduced-motion: reduce) {
+      .bar {
+        transition: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🔢 QuickSort Visualizer</h1>
+      <p class="subtitle">クイックソートアルゴリズムを視覚的に理解する</p>
+    </header>
+
+    <div class="card">
+      <div class="controls">
+        <div class="control-group">
+          <label for="arraySize">配列サイズ:</label>
+          <select id="arraySize" aria-label="配列サイズを選択">
+            <option value="10">10</option>
+            <option value="20" selected>20</option>
+            <option value="30">30</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label for="speed">速度:</label>
+          <input type="range" id="speed" min="1" max="100" value="50" aria-label="アニメーション速度">
+        </div>
+        <button class="btn-secondary" id="generateBtn">
+          🔀 新規配列
+        </button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="visualizer" id="visualizer" role="img" aria-label="ソートの可視化">
+        <!-- 棒グラフがここに生成される -->
+      </div>
+
+      <div class="step-info" aria-live="polite">
+        <p class="step-text" id="stepText">「開始」ボタンを押してソートを開始</p>
+      </div>
+
+      <div class="buttons">
+        <button class="btn-primary" id="startBtn">▶ 開始</button>
+        <button class="btn-secondary" id="pauseBtn" disabled>⏸ 一時停止</button>
+        <button class="btn-secondary" id="resetBtn">↺ リセット</button>
+      </div>
+
+      <div class="status">
+        <div class="stat-item">
+          <div class="stat-label">比較回数</div>
+          <div class="stat-value" id="comparisons">0</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">スワップ回数</div>
+          <div class="stat-value" id="swaps">0</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">ステータス</div>
+          <div class="stat-value" id="statusText">待機中</div>
+        </div>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-color pivot"></div>
+          <span>ピボット</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color comparing"></div>
+          <span>比較中</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color swapping"></div>
+          <span>スワップ</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color sorted"></div>
+          <span>ソート済み</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== 状態管理 =====
+    const state = {
+      array: [],
+      sorting: false,
+      paused: false,
+      comparisons: 0,
+      swaps: 0,
+      animationId: null,
+      sortedIndices: new Set()
+    };
+
+    // ===== DOM要素の取得 =====
+    const elements = {
+      visualizer: document.getElementById('visualizer'),
+      startBtn: document.getElementById('startBtn'),
+      pauseBtn: document.getElementById('pauseBtn'),
+      resetBtn: document.getElementById('resetBtn'),
+      generateBtn: document.getElementById('generateBtn'),
+      arraySize: document.getElementById('arraySize'),
+      speed: document.getElementById('speed'),
+      comparisons: document.getElementById('comparisons'),
+      swaps: document.getElementById('swaps'),
+      statusText: document.getElementById('statusText'),
+      stepText: document.getElementById('stepText')
+    };
+
+    // ===== ユーティリティ関数 =====
+
+    // 指定範囲のランダム整数を生成
+    function randomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    // 遅延を返すPromise（速度スライダーに基づく）
+    function delay() {
+      // 速度1で500ms、速度100で10ms
+      const ms = 510 - (elements.speed.value * 5);
+      return new Promise(resolve => {
+        state.animationId = setTimeout(resolve, ms);
+      });
+    }
+
+    // 一時停止中は待機
+    async function waitIfPaused() {
+      while (state.paused && state.sorting) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+    }
+
+    // ===== 配列の生成と描画 =====
+
+    // 新しいランダム配列を生成
+    function generateArray() {
+      const size = parseInt(elements.arraySize.value);
+      state.array = [];
+      for (let i = 0; i < size; i++) {
+        state.array.push(randomInt(5, 100));
+      }
+      state.sortedIndices.clear();
+      renderBars();
+    }
+
+    // 棒グラフを描画
+    function renderBars(highlights = {}) {
+      const { pivot, comparing, swapping } = highlights;
+      const maxVal = Math.max(...state.array);
+
+      elements.visualizer.innerHTML = state.array.map((val, idx) => {
+        const height = (val / maxVal) * 100;
+        let className = 'bar';
+
+        if (state.sortedIndices.has(idx)) {
+          className += ' sorted';
+        } else if (idx === pivot) {
+          className += ' pivot';
+        } else if (comparing && comparing.includes(idx)) {
+          className += ' comparing';
+        } else if (swapping && swapping.includes(idx)) {
+          className += ' swapping';
+        }
+
+        return `<div class="${className}" style="height: ${height}%" aria-label="値: ${val}"></div>`;
+      }).join('');
+    }
+
+    // ===== 統計の更新 =====
+
+    function updateStats() {
+      elements.comparisons.textContent = state.comparisons;
+      elements.swaps.textContent = state.swaps;
+    }
+
+    function setStatus(text) {
+      elements.statusText.textContent = text;
+    }
+
+    function setStepText(text) {
+      elements.stepText.innerHTML = text;
+    }
+
+    // ===== クイックソートアルゴリズム =====
+
+    async function quickSort(low, high) {
+      if (!state.sorting) return;
+      await waitIfPaused();
+
+      if (low < high) {
+        const pivotIndex = await partition(low, high);
+        if (!state.sorting) return;
+
+        // ピボットはソート済みとしてマーク
+        state.sortedIndices.add(pivotIndex);
+        renderBars();
+
+        // 左側をソート
+        await quickSort(low, pivotIndex - 1);
+        // 右側をソート
+        await quickSort(pivotIndex + 1, high);
+      } else if (low === high) {
+        // 単一要素はソート済み
+        state.sortedIndices.add(low);
+        renderBars();
+      }
+    }
+
+    async function partition(low, high) {
+      // ピボットは末尾の要素
+      const pivot = state.array[high];
+      setStepText(`ピボット選択: <strong>${pivot}</strong> (インデックス ${high})`);
+      renderBars({ pivot: high });
+      await delay();
+      await waitIfPaused();
+
+      let i = low - 1;
+
+      for (let j = low; j < high; j++) {
+        if (!state.sorting) return i + 1;
+        await waitIfPaused();
+
+        // 比較
+        state.comparisons++;
+        updateStats();
+        setStepText(`比較: <strong>${state.array[j]}</strong> と ピボット <strong>${pivot}</strong>`);
+        renderBars({ pivot: high, comparing: [j] });
+        await delay();
+
+        if (state.array[j] <= pivot) {
+          i++;
+          if (i !== j) {
+            // スワップ
+            setStepText(`スワップ: <strong>${state.array[i]}</strong> ↔ <strong>${state.array[j]}</strong>`);
+            renderBars({ pivot: high, swapping: [i, j] });
+            await delay();
+
+            [state.array[i], state.array[j]] = [state.array[j], state.array[i]];
+            state.swaps++;
+            updateStats();
+            renderBars({ pivot: high });
+            await delay();
+          }
+        }
+      }
+
+      // ピボットを正しい位置に移動
+      if (i + 1 !== high) {
+        setStepText(`ピボットを位置 ${i + 1} に移動`);
+        renderBars({ swapping: [i + 1, high] });
+        await delay();
+
+        [state.array[i + 1], state.array[high]] = [state.array[high], state.array[i + 1]];
+        state.swaps++;
+        updateStats();
+      }
+
+      return i + 1;
+    }
+
+    // ===== ソートの制御 =====
+
+    async function startSort() {
+      if (state.sorting && state.paused) {
+        // 一時停止からの再開
+        state.paused = false;
+        elements.startBtn.disabled = true;
+        elements.pauseBtn.disabled = false;
+        setStatus('実行中');
+        return;
+      }
+
+      // 新規開始
+      state.sorting = true;
+      state.paused = false;
+      state.comparisons = 0;
+      state.swaps = 0;
+      state.sortedIndices.clear();
+      updateStats();
+
+      elements.startBtn.disabled = true;
+      elements.pauseBtn.disabled = false;
+      elements.generateBtn.disabled = true;
+      elements.arraySize.disabled = true;
+      setStatus('実行中');
+
+      await quickSort(0, state.array.length - 1);
+
+      if (state.sorting) {
+        // 全要素をソート済みとしてマーク
+        for (let i = 0; i < state.array.length; i++) {
+          state.sortedIndices.add(i);
+        }
+        renderBars();
+        setStepText('✅ ソート完了！');
+        setStatus('完了');
+      }
+
+      state.sorting = false;
+      elements.startBtn.disabled = false;
+      elements.pauseBtn.disabled = true;
+      elements.generateBtn.disabled = false;
+      elements.arraySize.disabled = false;
+      elements.startBtn.textContent = '▶ 開始';
+    }
+
+    function pauseSort() {
+      state.paused = true;
+      elements.startBtn.disabled = false;
+      elements.startBtn.textContent = '▶ 再開';
+      elements.pauseBtn.disabled = true;
+      setStatus('一時停止');
+    }
+
+    function resetSort() {
+      // 進行中のソートを停止
+      state.sorting = false;
+      state.paused = false;
+      if (state.animationId) {
+        clearTimeout(state.animationId);
+      }
+
+      state.comparisons = 0;
+      state.swaps = 0;
+      state.sortedIndices.clear();
+      updateStats();
+
+      elements.startBtn.disabled = false;
+      elements.startBtn.textContent = '▶ 開始';
+      elements.pauseBtn.disabled = true;
+      elements.generateBtn.disabled = false;
+      elements.arraySize.disabled = false;
+
+      generateArray();
+      setStepText('「開始」ボタンを押してソートを開始');
+      setStatus('待機中');
+    }
+
+    // ===== イベントリスナー =====
+
+    elements.startBtn.addEventListener('click', startSort);
+    elements.pauseBtn.addEventListener('click', pauseSort);
+    elements.resetBtn.addEventListener('click', resetSort);
+    elements.generateBtn.addEventListener('click', () => {
+      if (!state.sorting) {
+        generateArray();
+        setStepText('「開始」ボタンを押してソートを開始');
+      }
+    });
+    elements.arraySize.addEventListener('change', () => {
+      if (!state.sorting) {
+        generateArray();
+        setStepText('「開始」ボタンを押してソートを開始');
+      }
+    });
+
+    // ===== 初期化 =====
+    generateArray();
+  </script>
+</body>
+</html>

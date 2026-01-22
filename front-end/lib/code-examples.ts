@@ -26,6 +26,17 @@ export interface CodeExample {
 
 const CDN_BASE_URL = "https://cdn.openai.com/devhub/gpt5prompts";
 const IFRAME_BASE_URL = "/";
+const LOCAL_POSTER_DIR = "posters";
+
+// ファイルの存在確認
+async function fileExists(filePath: string): Promise<boolean> {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 // --- helpers to normalize YAML fields ---
 function toStringArray(value: unknown): string[] | undefined {
@@ -45,13 +56,14 @@ function toCodeExample(
     tags?: string[];
     camera?: boolean;
     microphone?: boolean;
+    poster?: string;
   }
 ): CodeExample {
   return {
     id,
     title: data.title,
     prompt: data.prompt,
-    poster: `${CDN_BASE_URL}/${id}.png`,
+    poster: data.poster ?? `${CDN_BASE_URL}/${id}.png`,
     iframeUrl: `${IFRAME_BASE_URL}${id}`,
     tags: data.tags ?? [],
     camera: data.camera,
@@ -80,6 +92,11 @@ export async function loadApps(): Promise<CodeExample[]> {
       const prompt = typeof obj.prompt === "string" ? obj.prompt : undefined;
       if (!title || !prompt) continue;
 
+      // ローカルポスターが存在するかチェック
+      const localPosterPath = path.join(process.cwd(), "public", LOCAL_POSTER_DIR, `${slug}.png`);
+      const hasLocalPoster = await fileExists(localPosterPath);
+      const poster = hasLocalPoster ? `/${LOCAL_POSTER_DIR}/${slug}.png` : undefined;
+
       apps.push(
         toCodeExample(slug, {
           title,
@@ -87,6 +104,7 @@ export async function loadApps(): Promise<CodeExample[]> {
           tags: toStringArray(obj.tags),
           camera: toBool(obj.camera),
           microphone: toBool(obj.microphone),
+          poster,
         })
       );
     } catch {

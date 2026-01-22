@@ -1,0 +1,11 @@
+id: quicksort-visualizer
+title: QuickSort Visualizer
+prompt: |
+  Create a single-page app in a single HTML file that visualizes the QuickSort algorithm.
+  Features: Array visualization with bars, step-by-step animation showing pivot selection, comparisons, and swaps, playback controls (start, pause, reset), speed adjustment, array size selection.
+  Color coding: pivot (yellow), comparing elements (blue), swapping (orange), sorted (green).
+  Display comparison count and swap count.
+  The UI should be clean and educational.
+tags:
+  - interactive
+  - utility
